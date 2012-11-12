@@ -2,7 +2,7 @@ package com.mosesn.intree
 
 case class Node[A : Ordering, B](
   interval: Interval[A],
-  myValue: B,
+  value: B,
   parent: Option[Node[A, B]],
   left: Option[Node[A, B]],
   right: Option[Node[A, B]]) {
@@ -13,9 +13,16 @@ case class Node[A : Ordering, B](
 
   def key: A = interval.first
 
-  def treeMax: A
-
-  def value: B = myValue
+  def treeMax: A = {
+    val leftMax = left map (_.treeMax)
+    val rightMax = right map (_.treeMax)
+    leftMax -> rightMax match {
+      case (None, None) => interval.second
+      case (None, Some(right)) => right
+      case (Some(left), None) => left
+      case (Some(left), Some(right)) => implicitly[Ordering[A]].max(left, right)
+    }
+  }
 }
 
 object Leaf {
