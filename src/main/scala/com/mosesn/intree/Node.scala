@@ -1,27 +1,26 @@
 package com.mosesn.intree
 
-sealed trait Node[A, B] {
-  def parent: Option[Node[A, B]]
+case class Node[A : Ordering, B](
+  interval: Interval[A],
+  myValue: B,
+  parent: Option[Node[A, B]],
+  left: Option[Node[A, B]],
+  right: Option[Node[A, B]]) {
 
-  def left: Option[Node[A, B]]
+  def contains(elt: A): Boolean = interval.contains(elt)
 
-  def right: Option[Node[A, B]]
+  def <(other: Node[A, B]): Boolean = implicitly[Ordering[A]].lt(key, other.key)
 
-  def leftMayContain(elt: A): Boolean
+  def key: A = interval.first
 
-  def rightMayContain(elt: A): Boolean
+  def treeMax: A
 
-  def contains(elt: A): Boolean
-
-  private[Node] def interval: Interval[A]
-
-  private[Node] def max: A
-
-  def value: B
+  def value: B = myValue
 }
 
-/*
-case class Leaf[A, B](interval: Interval[A], value: B) extends Node[A, B]
-
-case class Branch[A, B](interval: Interval[A], value: B) extends Node[A, B]
-*/
+object Leaf {
+  def apply[A : Ordering, B](
+    interval: Interval[A],
+    value: B,
+    parent: Option[Node[A, B]]): Node[A, B] = Node(interval, value, parent, None, None)
+}
