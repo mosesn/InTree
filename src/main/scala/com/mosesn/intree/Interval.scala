@@ -30,14 +30,10 @@ case class Interval[A : Ordering](
   first: A,
   second: A,
   braces: Braces = new LeftOpen with RightOpen) {
-
-  private[this] def lteq(left: A, right: A) = implicitly[Ordering[A]].lteq(left, right)
-
   require(
-    lteq(first, second),
+    implicitly[Ordering[A]].lteq(first, second),
     "The first argument to a Range but be less than the second under your ordering.")
 
   def contains(elt: A): Boolean = braces.leftOperator(first, elt) && braces.rightOperator(elt, second)
 
-  def gt(elt: A): Boolean = implicitly[Ordering[A]].gteq(first, elt)
 }

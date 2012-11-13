@@ -10,7 +10,39 @@ trait InTree[A, B] extends Iterable[Pair[Interval[A], B]] {
 
   val root: Option[Node[A, B]]
 
-  def search(elt: A): Seq[B] = (root map (InTree.search(elt, _))).getOrElse(Seq.empty)
+  def search(elt: A): Seq[B] = {
+    def searchTree[A : Ordering, B](elt: A, roots: Seq[Node[A, B]]): Seq[B] = {
+      def leftMayContain(rootNode: Node[A, B]): Boolean = implicitly[Ordering[A]].lteq(elt, rootNode.treeMax)
+
+      def rightMayContain(rootNode: Node[A, B]): Boolean = implicitly[Ordering[A]].gteq(elt, rootNode.key) &&
+        implicitly[Ordering[A]].lteq(elt, rootNode.treeMax)
+
+      def leftNodesToSearch(rootNode: Node[A, B]): Seq[Node[A, B]] = if (leftMayContain(rootNode))
+        rootNode.left.toSeq
+      else
+        Seq.empty
+
+      def rightNodesToSearch(rootNode: Node[A, B]): Seq[Node[A, B]] = if (rightMayContain(rootNode))
+        rootNode.right.toSeq
+      else Seq.empty
+
+      def getValueIfValid(rootNode: Node[A, B]): Seq[B] = if (rootNode.contains(elt))
+        Seq(rootNode.value)
+      else
+        Seq.empty
+
+      if (!roots.isEmpty) {
+        (roots flatMap { head =>
+          getValueIfValid(head)
+        }) ++ searchTree(elt, roots flatMap (rootNode => leftNodesToSearch(rootNode) ++ rightNodesToSearch(rootNode)))
+      }
+      else {
+        Seq()
+      }
+    }
+
+    searchTree(elt, root.toSeq)
+  }
 
   override def iterator: Iterator[Elem] = new Iterator[Elem] {
     var cur: Seq[Node[A, B]] = root.toSeq
@@ -41,15 +73,15 @@ object InTree {
         val newNode = Leaf(elt._1, elt._2, None)
 
         def insert(subtree: Node[A, B]): Node[A, B] = {
-          if (subtree < newNode) {
+          if (newNode < subtree) {
             subtree.copy(left = Some(subtree match {
-              case Node(_, _, _, None, _) => newNode
+              case Node(_, _, _, None, _) => newNode.copy(parent = Some(subtree))
               case Node(_, _, _, Some(left), _) => insert(left)
             }))
           }
           else {
             subtree.copy(right = Some(subtree match {
-              case Node(_, _, _, _, None) => newNode
+              case Node(_, _, _, _, None) => newNode.copy(parent = Some(subtree))
               case Node(_, _, _, _, Some(right)) => insert(right)
             }))
           }
@@ -71,28 +103,5 @@ object InTree {
       override val root = self.root
       override val ordering = implicitly[Ordering[A]]
     }
-  }
-
-  def search[A : Ordering, B](elt: A, root: Node[A, B]): Seq[B] = {
-    def leftMayContain: Boolean = implicitly[Ordering[A]].lteq(elt, root.treeMax)
-
-    def rightMayContain: Boolean = implicitly[Ordering[A]].gteq(elt, root.key) &&
-      implicitly[Ordering[A]].lteq(elt, root.treeMax)
-
-    def searchLeft: Seq[B] = if (leftMayContain)
-      root.left.toSeq flatMap (search(elt, _))
-    else
-      Seq.empty
-
-    def searchRight: Seq[B] = if (rightMayContain)
-      root.right.toSeq flatMap (search(elt, _))
-    else Seq.empty
-
-    def getValueIfValid: Seq[B] = if (root.contains(elt))
-      Seq(root.value)
-    else
-      Seq.empty
-
-    getValueIfValid ++ searchLeft ++ searchRight
   }
 }
