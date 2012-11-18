@@ -26,10 +26,12 @@ trait RightClosed extends Braces {
     implicitly[Ordering[A]].lteq(left, right)
 }
 
+case object Open extends LeftOpen with RightOpen
+
 case class Interval[A : Ordering](
   first: A,
   second: A,
-  braces: Braces = new LeftOpen with RightOpen) {
+  braces: Braces = Open) {
   require(
     implicitly[Ordering[A]].lteq(first, second),
     "The first argument to a Range but be less than the second under your ordering.")

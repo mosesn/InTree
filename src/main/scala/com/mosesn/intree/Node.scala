@@ -3,7 +3,6 @@ package com.mosesn.intree
 case class Node[A : Ordering, B](
   interval: Interval[A],
   value: B,
-  parent: Option[Node[A, B]],
   left: Option[Node[A, B]],
   right: Option[Node[A, B]]) {
 
@@ -38,6 +37,5 @@ case class Node[A : Ordering, B](
 object Leaf {
   def apply[A : Ordering, B](
     interval: Interval[A],
-    value: B,
-    parent: Option[Node[A, B]]): Node[A, B] = Node(interval, value, parent, None, None)
+    value: B): Node[A, B] = Node(interval, value, None, None)
 }

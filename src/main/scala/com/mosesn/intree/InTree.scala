@@ -65,24 +65,62 @@ object InTree {
   def apply[A : Ordering, B](pairs: Pair[Interval[A], B]*): InTree[A, B] =
     pairs.foldRight(builder[A, B])((pair, bldr) => bldr += pair).result()
 
+  def leftRotate[A : Ordering, B](root: Node[A, B], node: Node[A, B]): Node[A, B] = {
+    if (root == node) {
+      node.right match {
+        case Some(right) =>
+          right.copy(left = Some(node.copy(right = right.left)))
+        case None =>
+          throw new Exception("You shouldn't left rotate when you don't have a right child.")
+      }
+    }
+    else {
+      if (node < root) {
+        root.copy(left = (root.left map (leftRotate(_, node))))
+      }
+      else {
+        root.copy(right = (root.right map (leftRotate(_, node))))
+      }
+    }
+  }
+
+  def rightRotate[A : Ordering, B](root: Node[A, B], node: Node[A, B]): Node[A, B] = {
+    if (root == node) {
+      node.left match {
+        case Some(left) =>
+          left.copy(right = Some(node.copy(left = left.right)))
+        case None =>
+          throw new Exception("You shouldn't right rotate when you don't have a left child.")
+      }
+    }
+    else {
+      if (node < root) {
+        root.copy(left = (root.left map (rightRotate(_, node))))
+      }
+      else {
+        root.copy(right = (root.right map (rightRotate(_, node))))
+      }
+    }
+  }
+
   def builder[A : Ordering, B]: Builder[Pair[Interval[A], B], InTree[A, B]] =
     new Builder[Pair[Interval[A], B], InTree[A, B]] { self =>
       var root: Option[Node[A, B]] = None
 
       override def +=(elt: Pair[Interval[A], B]): this.type = {
-        val newNode = Leaf(elt._1, elt._2, None)
+        val newNode = Leaf(elt._1, elt._2)
 
         def insert(subtree: Node[A, B]): Node[A, B] = {
           if (newNode < subtree) {
             subtree.copy(left = Some(subtree match {
-              case Node(_, _, _, None, _) => newNode.copy(parent = Some(subtree))
-              case Node(_, _, _, Some(left), _) => insert(left)
+              case Node(_, _, None, _) => newNode
+              case Node(_, _, Some(left), _) => insert(left)
             }))
           }
           else {
             subtree.copy(right = Some(subtree match {
-              case Node(_, _, _, _, None) => newNode.copy(parent = Some(subtree))
-              case Node(_, _, _, _, Some(right)) => insert(right)
+              case Node(_, _, _, None) => newNode
+              case Node(_, _, _, Some(right)) => insert(right)
             }))
           }
         }

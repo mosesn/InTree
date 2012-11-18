@@ -43,5 +43,69 @@ class InTreeSpec extends FunSpec {
       assert(tree.size === 15)
       assert(tree.search(inbetween).toSet === (goodPairs map (_._2)).toSet)
     }
+
+    it("should left rotate properly") {
+      val root =
+        Node(
+          Interval(100, 200),
+          0,
+          Some(Leaf(Interval(50, 100), 1)),
+          Some(
+            Node(
+              Interval(125, 250),
+              2,
+              Some(Leaf(Interval(115, 130), 3)),
+              Some(Leaf(Interval(140, 170), 4))
+            )
+          )
+        )
+      val golden =
+        Node(
+          Interval(125, 250),
+          2,
+          Some(
+            Node(
+              Interval(100, 200),
+              0,
+              Some(Leaf(Interval(50, 100), 1)),
+              Some(Leaf(Interval(115, 130), 3))
+            )
+          ),
+          Some(Leaf(Interval(140, 170), 4))
+        )
+      assert(InTree.leftRotate(root, root) === golden)
+    }
+
+    it("should right rotate properly") {
+      val root =
+        Node(
+          Interval(100, 200),
+          0,
+          Some(
+            Node(
+              Interval(85, 250),
+              2,
+              Some(Leaf(Interval(60, 170), 4)),
+              Some(Leaf(Interval(95, 130), 3))
+            )
+          ),
+          Some(Leaf(Interval(125, 300), 1))
+        )
+      val golden =
+        Node(
+          Interval(85, 250),
+          2,
+          Some(Leaf(Interval(60, 170), 4)),
+          Some(
+            Node(
+              Interval(100, 200),
+              0,
+              Some(Leaf(Interval(95, 130), 3)),
+              Some(Leaf(Interval(125, 300), 1))
+            )
+          )
+        )
+      assert(InTree.rightRotate(root, root) === golden)
+    }
   }
 }
